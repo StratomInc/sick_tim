@@ -14,4 +14,4 @@ sick_driver:
     skip: 0
     frame_id: "laser"
     time_offset: -0.001
-    publish_datagram: false
+    publish_datagram: true

@@ -79,9 +79,6 @@ int main(int argc, char **argv)
 
   sick_tim::SickTim5512050001Parser* parser = new sick_tim::SickTim5512050001Parser();
 
-  diagnostic_updater::Updater * diagnostics = new diagnostic_updater::Updater(node, 10.0);
-  diagnostics->setHardwareID("none");   // set from device after connection
-
   double param;
   if (node->get_parameter("range_min", param))
   {
@@ -101,17 +98,18 @@ int main(int argc, char **argv)
   int result = sick_tim::ExitError;
   while (rclcpp::ok())
   {
+    rclcpp::spin_some(node);
     // Atempt to connect/reconnect
     if (subscribe_datagram)
     {
-      s = new sick_tim::SickTimCommonMockup(parser, node, diagnostics);
+      s = new sick_tim::SickTimCommonMockup(parser, node);
     } else if (useTCP) {
-      s = new sick_tim::SickTimCommonTcp(hostname, port, timelimit, parser, node, diagnostics);
+      s = new sick_tim::SickTimCommonTcp(hostname, port, timelimit, parser, node);
     } else {
-      s = new sick_tim::SickTimCommonUsb(parser, device_number, node, diagnostics);
+      s = new sick_tim::SickTimCommonUsb(parser, device_number, node);
     }
     result = s->init();
-    rclcpp::spin_some(node);
+    
     while(rclcpp::ok() && (result == sick_tim::ExitSuccess)){
       result = s->loopOnce();
       rclcpp::spin_some(node);
@@ -126,6 +124,5 @@ int main(int argc, char **argv)
   }
 
   delete parser;
-  delete diagnostics;
   return result;
 }

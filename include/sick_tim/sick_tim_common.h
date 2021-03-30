@@ -67,7 +67,7 @@ namespace sick_tim
 class SickTimCommon
 {
 public:
-  SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr node,  diagnostic_updater::Updater * diagnostics);
+  SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr node);
   virtual ~SickTimCommon();
   virtual int init();
   virtual int loopOnce();
@@ -114,10 +114,10 @@ protected:
   bool isCompatibleDevice(const std::string identStr) const;
 
 protected:
-  diagnostic_updater::Updater * diagnostics_;
+  diagnostic_updater::Updater diagnostics_;
 
   bool publish_datagram_;
-  rclcpp::Publisher<example_interfaces::msg::String>::SharedPtr datagram_pub_;
+  rclcpp::Publisher<example_interfaces::msg::String>::SharedPtr datagram_pub_ = nullptr;
 
   // Diagnostics
   diagnostic_updater::DiagnosedPublisher<sensor_msgs::msg::LaserScan>* diagnosticPub_;
