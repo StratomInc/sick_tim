@@ -15,8 +15,6 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-
     config = os.path.join(
         get_package_share_directory('sick_tim'),
         'cfg',

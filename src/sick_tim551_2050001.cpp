@@ -111,6 +111,7 @@ int main(int argc, char **argv)
       s = new sick_tim::SickTimCommonUsb(parser, device_number, node, diagnostics);
     }
     result = s->init();
+    rclcpp::spin_some(node);
     while(rclcpp::ok() && (result == sick_tim::ExitSuccess)){
       result = s->loopOnce();
       rclcpp::spin_some(node);

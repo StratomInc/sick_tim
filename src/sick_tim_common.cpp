@@ -49,6 +49,7 @@ SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr nod
     // FIXME All Tims have 15Hz?
 {
   node_ = node;
+  // parameter_client_ = std::make_shared<rclcpp::SyncParametersClient>(node);
   // // Parameter Client Setup
   // while (!parameter_client_->wait_for_service(std::chrono::seconds(5))) {
   //   if (!rclcpp::ok()) {
@@ -62,8 +63,8 @@ SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr nod
   //     "service not available, waiting again...");
   // }
 
-  // parameter_subscription_ = parameter_client_->on_parameter_event(
-  //     std::bind(&SickTimCommon::onParameterEvent, this, std::placeholders::_1));
+  node_->set_on_parameters_set_callback(
+      std::bind(&SickTimCommon::onParameterEvent, this, std::placeholders::_1));
 
   // dynamic_reconfigure::Server<sick_tim::SickTimConfig>::CallbackType f;
   // f = boost::bind(&sick_tim::SickTimCommon::update_config, this, _1, _2);
@@ -96,80 +97,100 @@ SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr nod
   assert(diagnosticPub_ != NULL);
 }
 
-void SickTimCommon::onParameterEvent(const rcl_interfaces::msg::ParameterEvent::SharedPtr event)
-{
-  for (auto & changed_parameter : event->changed_parameters) {
-    if(changed_parameter.name == "min_ang")
+rcl_interfaces::msg::SetParametersResult SickTimCommon::onParameterEvent(
+        const std::vector<rclcpp::Parameter> &parameters)
     {
-      if(changed_parameter.value.double_value < -0.75 * M_PI || changed_parameter.value.double_value > 0.75 * M_PI)
+      RCLCPP_INFO(node_->get_logger(), "Changed Param!!");
+      rcl_interfaces::msg::SetParametersResult result;
+      result.successful = false;
+      result.reason = "failure";
+      for (const auto &parameter : parameters)
       {
-        RCLCPP_WARN(node_->get_logger(), "Minimum angle outside limits: [-0.75*pi,0.75*pi] | Leaving parameter unchanged");
-        return;
+          if (parameter.get_name() == "min_ang" &&
+              parameter.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE)
+          {
+              double test = parameter.as_double();
+              RCLCPP_INFO(node_->get_logger(), "Parameter 'min_ang' changed: %f", test);
+          }
       }
-      if (changed_parameter.value.double_value > config_.max_ang)
-      {
-        RCLCPP_WARN(node_->get_logger(), "Minimum angle must be less than minimum angle. Adjusting min_ang.");
-        config_.min_ang = config_.max_ang;
-      }
-      else
-      {
-        config_.min_ang = changed_parameter.value.double_value;
-      }
-    } else if(changed_parameter.name == "max_ang")
-    {
-      if(changed_parameter.value.double_value < -0.75 * M_PI || changed_parameter.value.double_value > 0.75 * M_PI)
-      {
-        RCLCPP_WARN(node_->get_logger(), "Maximum angle outside limits: [-0.75*pi,0.75*pi] | Leaving parameter unchanged");
-        return;
-      }
-      if (changed_parameter.value.double_value < config_.min_ang)
-      {
-        RCLCPP_WARN(node_->get_logger(), "Maximum angle must be greater than minimum angle. Adjusting max_ang.");
-        config_.max_ang = config_.min_ang;
-      }
-      else
-      {
-        config_.max_ang = changed_parameter.value.double_value;
-      }
-    } else if(changed_parameter.name == "intensity")
-    {
-      config_.intensity = changed_parameter.value.bool_value;
-    } else if(changed_parameter.name == "skip")
-    {
-      if(changed_parameter.value.integer_value < 0 || changed_parameter.value.integer_value > 9)
-      {
-        RCLCPP_WARN(node_->get_logger(), "Skip outside limits = [0,9] | Leaving parameter unchanged");
-        return;
-      }
-      config_.skip = changed_parameter.value.integer_value;
-    } else if(changed_parameter.name == "frame_id")
-    {
-      config_.frame_id = changed_parameter.value.string_value;
-    } else if(changed_parameter.name == "time_offset")
-    {
-      if(changed_parameter.value.double_value < -0.25 || changed_parameter.value.double_value > 0.25)
-      {
-        RCLCPP_WARN(node_->get_logger(), "Time offset outside limits = [-0.25,0.25] | Leaving parameter unchanged");
-        return;
-      }
-      config_.time_offset = changed_parameter.value.double_value;
-    } else if(changed_parameter.name == "auto_reboot")
-    {
-      config_.auto_reboot = changed_parameter.value.bool_value;
-    } else if(changed_parameter.name == "publish_datagram")
-    {
-      config_.publish_datagram = changed_parameter.value.bool_value;
-      if(config_.publish_datagram)
-      {
-        datagram_pub_ = node_->create_publisher<example_interfaces::msg::String>("datagram", 1000);
-      }
-      else
-      {
-        datagram_pub_.reset();
-      }
+      return result;
     }
-  }
-}
+// void SickTimCommon::onParameterEvent(const rcl_interfaces::msg::ParameterEvent::SharedPtr event)
+// {
+// RCLCPP_INFO(node_->get_logger(), "Changed Param!!");
+//   for (auto & changed_parameter : event->changed_parameters) {
+//     RCLCPP_INFO(node_->get_logger(), "Changed Param: %s",changed_parameter);
+//     if(changed_parameter.name == "min_ang")
+//     {
+//       if(changed_parameter.value.double_value < -0.75 * M_PI || changed_parameter.value.double_value > 0.75 * M_PI)
+//       {
+//         RCLCPP_WARN(node_->get_logger(), "Minimum angle outside limits: [-0.75*pi,0.75*pi] | Leaving parameter unchanged");
+//         return;
+//       }
+//       if (changed_parameter.value.double_value > config_.max_ang)
+//       {
+//         RCLCPP_WARN(node_->get_logger(), "Minimum angle must be less than minimum angle. Adjusting min_ang.");
+//         config_.min_ang = config_.max_ang;
+//       }
+//       else
+//       {
+//         config_.min_ang = changed_parameter.value.double_value;
+//       }
+//     } else if(changed_parameter.name == "max_ang")
+//     {
+//       if(changed_parameter.value.double_value < -0.75 * M_PI || changed_parameter.value.double_value > 0.75 * M_PI)
+//       {
+//         RCLCPP_WARN(node_->get_logger(), "Maximum angle outside limits: [-0.75*pi,0.75*pi] | Leaving parameter unchanged");
+//         return;
+//       }
+//       if (changed_parameter.value.double_value < config_.min_ang)
+//       {
+//         RCLCPP_WARN(node_->get_logger(), "Maximum angle must be greater than minimum angle. Adjusting max_ang.");
+//         config_.max_ang = config_.min_ang;
+//       }
+//       else
+//       {
+//         config_.max_ang = changed_parameter.value.double_value;
+//       }
+//     } else if(changed_parameter.name == "intensity")
+//     {
+//       config_.intensity = changed_parameter.value.bool_value;
+//     } else if(changed_parameter.name == "skip")
+//     {
+//       if(changed_parameter.value.integer_value < 0 || changed_parameter.value.integer_value > 9)
+//       {
+//         RCLCPP_WARN(node_->get_logger(), "Skip outside limits = [0,9] | Leaving parameter unchanged");
+//         return;
+//       }
+//       config_.skip = changed_parameter.value.integer_value;
+//     } else if(changed_parameter.name == "frame_id")
+//     {
+//       config_.frame_id = changed_parameter.value.string_value;
+//     } else if(changed_parameter.name == "time_offset")
+//     {
+//       if(changed_parameter.value.double_value < -0.25 || changed_parameter.value.double_value > 0.25)
+//       {
+//         RCLCPP_WARN(node_->get_logger(), "Time offset outside limits = [-0.25,0.25] | Leaving parameter unchanged");
+//         return;
+//       }
+//       config_.time_offset = changed_parameter.value.double_value;
+//     } else if(changed_parameter.name == "auto_reboot")
+//     {
+//       config_.auto_reboot = changed_parameter.value.bool_value;
+//     } else if(changed_parameter.name == "publish_datagram")
+//     {
+//       config_.publish_datagram = changed_parameter.value.bool_value;
+//       if(config_.publish_datagram)
+//       {
+//         datagram_pub_ = node_->create_publisher<example_interfaces::msg::String>("datagram", 1000);
+//       }
+//       else
+//       {
+//         datagram_pub_.reset();
+//       }
+//     }
+//   }
+// }
 
 int SickTimCommon::stop_scanner()
 {

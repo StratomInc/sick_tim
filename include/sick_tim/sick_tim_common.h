@@ -133,7 +133,9 @@ private:
   // Parameter Event subscription
   std::shared_ptr<rclcpp::Subscription<rcl_interfaces::msg::ParameterEvent,
     std::allocator<void>>> parameter_subscription_;
-  void onParameterEvent(const rcl_interfaces::msg::ParameterEvent::SharedPtr event);
+  //void onParameterEvent(const rcl_interfaces::msg::ParameterEvent::SharedPtr event);
+  rcl_interfaces::msg::SetParametersResult onParameterEvent(
+        const std::vector<rclcpp::Parameter> &parameters);
   //dynamic_reconfigure::Server<sick_tim::SickTimConfig> dynamic_reconfigure_server_;
 
   // Parser
