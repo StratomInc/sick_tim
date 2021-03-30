@@ -78,6 +78,9 @@ int main(int argc, char **argv)
   node->declare_parameter("auto_reboot", true);
 
   sick_tim::SickTim5512050001Parser* parser = new sick_tim::SickTim5512050001Parser();
+  //diagnostic_updater::Updater * diagnostics = new diagnostic_updater::Updater(node, 10.0);
+  std::shared_ptr<diagnostic_updater::Updater> diagnostics = std::make_shared<diagnostic_updater::Updater> (node, 10);
+  diagnostics->setHardwareID("none");   // set from device after connection
 
   double param;
   if (node->get_parameter("range_min", param))
@@ -102,11 +105,11 @@ int main(int argc, char **argv)
     // Atempt to connect/reconnect
     if (subscribe_datagram)
     {
-      s = new sick_tim::SickTimCommonMockup(parser, node);
+      s = new sick_tim::SickTimCommonMockup(parser, node, diagnostics);
     } else if (useTCP) {
-      s = new sick_tim::SickTimCommonTcp(hostname, port, timelimit, parser, node);
+      s = new sick_tim::SickTimCommonTcp(hostname, port, timelimit, parser, node, diagnostics);
     } else {
-      s = new sick_tim::SickTimCommonUsb(parser, device_number, node);
+      s = new sick_tim::SickTimCommonUsb(parser, device_number, node, diagnostics);
     }
     result = s->init();
     

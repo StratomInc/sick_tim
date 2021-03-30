@@ -44,11 +44,12 @@
 namespace sick_tim
 {
 
-SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr node) :
-    diagnosticPub_(NULL), expectedFrequency_(15.0), parser_(parser), diagnostics_(node)
+SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr node, std::shared_ptr<diagnostic_updater::Updater> diagnostics) :
+    diagnosticPub_(NULL), expectedFrequency_(15.0), parser_(parser), diagnostics_(diagnostics)
     // FIXME All Tims have 15Hz?
 {
   node_ = node;
+  //diagnostics_ = diagnostics;
   // parameter_client_ = std::make_shared<rclcpp::SyncParametersClient>(node);
   // // Parameter Client Setup
   // while (!parameter_client_->wait_for_service(std::chrono::seconds(5))) {
@@ -90,10 +91,9 @@ SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr nod
   }
 
   // scan publisher
-  diagnostics_.setHardwareID("none");   // set from device after connection
 
   pub_ = node_->create_publisher<sensor_msgs::msg::LaserScan>("scan", 1000);
-  diagnosticPub_ = new diagnostic_updater::DiagnosedPublisher<sensor_msgs::msg::LaserScan>(pub_, diagnostics_,
+  diagnosticPub_ = new diagnostic_updater::DiagnosedPublisher<sensor_msgs::msg::LaserScan>(pub_, *diagnostics_,
           // frequency should be target +- 10%.
           diagnostic_updater::FrequencyStatusParam(&expectedFrequency_, &expectedFrequency_, 0.1, 10),
           // timestamp delta can be from 0.0 to 1.3x what it ideally is.
@@ -293,14 +293,14 @@ bool SickTimCommon::rebootScanner()
   if (result != 0)
   {
     RCLCPP_ERROR(node_->get_logger(), "SOPAS - Error setting access mode");
-    diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error setting access mode.");
+    diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error setting access mode.");
     return false;
   }
   std::string access_reply_str = replyToString(access_reply);
   if (access_reply_str != "sAN SetAccessMode 1")
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "SOPAS - Error setting access mode, unexpected response : " << access_reply_str);
-    diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error setting access mode.");
+    diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error setting access mode.");
     return false;
   }
 
@@ -312,14 +312,14 @@ bool SickTimCommon::rebootScanner()
   if (result != 0)
   {
     RCLCPP_ERROR(node_->get_logger(), "SOPAS - Error rebooting scanner");
-    diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error rebooting device.");
+    diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error rebooting device.");
     return false;
   }
   std::string reboot_reply_str = replyToString(reboot_reply);
   if (reboot_reply_str != "sAN mSCreboot")
   {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "SOPAS - Error rebooting scanner, unexpected response : " << reboot_reply_str);
-    diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error setting access mode.");
+    diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error setting access mode.");
     return false;
   }
 
@@ -364,7 +364,7 @@ int SickTimCommon::init_scanner()
   if (result != 0)
   {
     RCLCPP_ERROR(node_->get_logger(), "SOPAS - Error reading variable 'DeviceIdent'.");
-    diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error reading variable 'DeviceIdent'.");
+    diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error reading variable 'DeviceIdent'.");
   }
 
   /*
@@ -376,13 +376,13 @@ int SickTimCommon::init_scanner()
   if (result != 0)
   {
     RCLCPP_ERROR(node_->get_logger(), "SOPAS - Error reading variable 'SerialNumber'.");
-    diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error reading variable 'SerialNumber'.");
+    diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error reading variable 'SerialNumber'.");
   }
 
   // set hardware ID based on DeviceIdent and SerialNumber
   std::string identStr = replyToString(identReply);
   std::string serialStr = replyToString(serialReply);
-  diagnostics_.setHardwareID(identStr + " " + serialStr);
+  diagnostics_->setHardwareID(identStr + " " + serialStr);
 
   if (!isCompatibleDevice(identStr))
     return ExitFatal;
@@ -395,7 +395,7 @@ int SickTimCommon::init_scanner()
   if (result != 0)
   {
     RCLCPP_ERROR(node_->get_logger(), "SOPAS - Error reading variable 'FirmwareVersion'.");
-    diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error reading variable 'FirmwareVersion'.");
+    diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error reading variable 'FirmwareVersion'.");
   }
 
   /*
@@ -407,7 +407,7 @@ int SickTimCommon::init_scanner()
   if (result != 0)
   {
     RCLCPP_ERROR(node_->get_logger(), "SOPAS - Error reading variable 'devicestate'.");
-    diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error reading variable 'devicestate'.");
+    diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error reading variable 'devicestate'.");
   }
   std::string deviceStateReplyStr = replyToString(deviceStateReply);
 
@@ -444,7 +444,7 @@ int SickTimCommon::init_scanner()
   if (result != 0)
   {
     RCLCPP_ERROR(node_->get_logger(), "SOPAS - Error starting to stream 'LMDscandata'.");
-    diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error starting to stream 'LMDscandata'.");
+    diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "SOPAS - Error starting to stream 'LMDscandata'.");
     return ExitError;
   }
 
@@ -487,7 +487,7 @@ bool sick_tim::SickTimCommon::isCompatibleDevice(const std::string identStr) con
 int SickTimCommon::loopOnce()
 {
 
-  diagnostics_.force_update();
+  diagnostics_->force_update();
 
   unsigned char receiveBuffer[65536];
   int actual_length = 0;
@@ -497,7 +497,7 @@ int SickTimCommon::loopOnce()
   if (result != 0)
   {
       RCLCPP_ERROR(node_->get_logger(), "Read Error when getting datagram: %i.", result);
-      diagnostics_.broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Read Error when getting datagram.");
+      diagnostics_->broadcast(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Read Error when getting datagram.");
       return ExitError; // return failure to exit node
   }
   if(actual_length <= 0)
