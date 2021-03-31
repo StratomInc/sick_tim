@@ -72,8 +72,6 @@ public:
   virtual int init();
   virtual int loopOnce();
   SickTimConfig config_;
-  // void check_angle_range(SickTimConfig &conf);
-  // void update_config(sick_tim::SickTimConfig &new_config, uint32_t level = 0);
 
   double get_expected_frequency() const { return expectedFrequency_; }
 

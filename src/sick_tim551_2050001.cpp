@@ -36,7 +36,6 @@
 #include <sick_tim/sick_tim_common_usb.h>
 #include <sick_tim/sick_tim_common_tcp.h>
 #include <sick_tim/sick_tim_common_mockup.h>
-#include <sick_tim/sick_node_interface.h>
 #include <sick_tim/sick_tim551_2050001_parser.h>
 
 
@@ -44,9 +43,6 @@ int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<rclcpp::Node>("sick_driver");
-  // rclcpp::executors::SingleThreadedExecutor exec;
-  // rclcpp::NodeOptions options;
-  // exec.add_node(node);
 
   // check for TCP - use if ~hostname is set.
   bool useTCP = false;
@@ -78,7 +74,7 @@ int main(int argc, char **argv)
   node->declare_parameter("auto_reboot", true);
 
   sick_tim::SickTim5512050001Parser* parser = new sick_tim::SickTim5512050001Parser();
-  //diagnostic_updater::Updater * diagnostics = new diagnostic_updater::Updater(node, 10.0);
+
   std::shared_ptr<diagnostic_updater::Updater> diagnostics = std::make_shared<diagnostic_updater::Updater> (node, 10);
   diagnostics->setHardwareID("none");   // set from device after connection
 

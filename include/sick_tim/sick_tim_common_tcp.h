@@ -48,7 +48,8 @@ namespace sick_tim
 class SickTimCommonTcp : public SickTimCommon
 {
 public:
-  SickTimCommonTcp(const std::string &hostname, const std::string &port, int &timelimit, AbstractParser* parser, rclcpp::Node::SharedPtr node, std::shared_ptr<diagnostic_updater::Updater> diagnostics);
+  SickTimCommonTcp(const std::string &hostname, const std::string &port, int &timelimit, AbstractParser* parser, 
+                  rclcpp::Node::SharedPtr node, std::shared_ptr<diagnostic_updater::Updater> diagnostics);
   virtual ~SickTimCommonTcp();
 
 protected:

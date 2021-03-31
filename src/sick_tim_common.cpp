@@ -49,27 +49,9 @@ SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr nod
     // FIXME All Tims have 15Hz?
 {
   node_ = node;
-  //diagnostics_ = diagnostics;
-  // parameter_client_ = std::make_shared<rclcpp::SyncParametersClient>(node);
-  // // Parameter Client Setup
-  // while (!parameter_client_->wait_for_service(std::chrono::seconds(5))) {
-  //   if (!rclcpp::ok()) {
-  //     RCLCPP_ERROR(
-  //       node_->get_logger(),
-  //       "Interrupted while waiting for the service. Exiting.");
-  //     rclcpp::shutdown();
-  //   }
-  //   RCLCPP_INFO(
-  //     node_->get_logger(),
-  //     "service not available, waiting again...");
-  // }
 
   node_->set_on_parameters_set_callback(
       std::bind(&SickTimCommon::onParameterEvent, this, std::placeholders::_1));
-
-  // dynamic_reconfigure::Server<sick_tim::SickTimConfig>::CallbackType f;
-  // f = boost::bind(&sick_tim::SickTimCommon::update_config, this, _1, _2);
-  // dynamic_reconfigure_server_.setCallback(f);
 
   // datagram publisher (only for debug)
   publish_datagram_ = node_->get_parameter("publish_datagram").as_bool();
@@ -83,11 +65,9 @@ SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr nod
   config_.time_offset = node_->get_parameter("time_offset").as_double();
   config_.auto_reboot = node_->get_parameter("auto_reboot").as_bool();
   
-  if (publish_datagram_ && datagram_pub_ == nullptr)
+  if (publish_datagram_)
   {
-    RCLCPP_INFO(node_->get_logger(), "Pre constructor create");
     datagram_pub_ = node_->create_publisher<example_interfaces::msg::String>("datagram", 1000);
-    RCLCPP_INFO(node_->get_logger(), "Post constructor create");
   }
 
   // scan publisher
@@ -164,108 +144,10 @@ rcl_interfaces::msg::SetParametersResult SickTimCommon::onParameterEvent(
       bool value = parameter.as_bool();
       RCLCPP_INFO(node_->get_logger(), "Parameter 'auto_reboot' changed to %s ", value ? "True" : "False");
     }
-    // if (parameter.get_name() == "publish_datagram")
-    // {
-    //   bool value = parameter.as_bool();
-    //   RCLCPP_INFO(node_->get_logger(), "Parameter 'publish_datagram' changed to %s ", value ? "True" : "False");
-    //   if (value && (datagram_pub_ == nullptr))
-    //   {
-    //     RCLCPP_INFO(node_->get_logger(), "Pre param change %s", node_->get_name());
-    //     //datagram_pub_ = 
-    //     // node_->create_publisher<example_interfaces::msg::String>("datagram", 1000);
-    //     RCLCPP_INFO(node_->get_logger(), "Post param change");
-
-    //   } else
-    //   {
-    //     RCLCPP_INFO(node_->get_logger(), "Pre reset");
-    //     datagram_pub_.reset();
-    //     RCLCPP_INFO(node_->get_logger(), "post reset");
-
-    //   }
-
-    //}
-            RCLCPP_INFO(node_->get_logger(), "End of dynamic param callback");
-
   }
 
   return result;
 }
-// void SickTimCommon::onParameterEvent(const rcl_interfaces::msg::ParameterEvent::SharedPtr event)
-// {
-// RCLCPP_INFO(node_->get_logger(), "Changed Param!!");
-//   for (auto & changed_parameter : event->changed_parameters) {
-//     RCLCPP_INFO(node_->get_logger(), "Changed Param: %s",changed_parameter);
-//     if(changed_parameter.name == "min_ang")
-//     {
-//       if(changed_parameter.value.double_value < -0.75 * M_PI || changed_parameter.value.double_value > 0.75 * M_PI)
-//       {
-//         RCLCPP_WARN(node_->get_logger(), "Minimum angle outside limits: [-0.75*pi,0.75*pi] | Leaving parameter unchanged");
-//         return;
-//       }
-//       if (changed_parameter.value.double_value > config_.max_ang)
-//       {
-//         RCLCPP_WARN(node_->get_logger(), "Minimum angle must be less than minimum angle. Adjusting min_ang.");
-//         config_.min_ang = config_.max_ang;
-//       }
-//       else
-//       {
-//         config_.min_ang = changed_parameter.value.double_value;
-//       }
-//     } else if(changed_parameter.name == "max_ang")
-//     {
-//       if(changed_parameter.value.double_value < -0.75 * M_PI || changed_parameter.value.double_value > 0.75 * M_PI)
-//       {
-//         RCLCPP_WARN(node_->get_logger(), "Maximum angle outside limits: [-0.75*pi,0.75*pi] | Leaving parameter unchanged");
-//         return;
-//       }
-//       if (changed_parameter.value.double_value < config_.min_ang)
-//       {
-//         RCLCPP_WARN(node_->get_logger(), "Maximum angle must be greater than minimum angle. Adjusting max_ang.");
-//         config_.max_ang = config_.min_ang;
-//       }
-//       else
-//       {
-//         config_.max_ang = changed_parameter.value.double_value;
-//       }
-//     } else if(changed_parameter.name == "intensity")
-//     {
-//       config_.intensity = changed_parameter.value.bool_value;
-//     } else if(changed_parameter.name == "skip")
-//     {
-//       if(changed_parameter.value.integer_value < 0 || changed_parameter.value.integer_value > 9)
-//       {
-//         RCLCPP_WARN(node_->get_logger(), "Skip outside limits = [0,9] | Leaving parameter unchanged");
-//         return;
-//       }
-//       config_.skip = changed_parameter.value.integer_value;
-//     } else if(changed_parameter.name == "frame_id")
-//     {
-//       config_.frame_id = changed_parameter.value.string_value;
-//     } else if(changed_parameter.name == "time_offset")
-//     {
-//       if(changed_parameter.value.double_value < -0.25 || changed_parameter.value.double_value > 0.25)
-//       {
-//         RCLCPP_WARN(node_->get_logger(), "Time offset outside limits = [-0.25,0.25] | Leaving parameter unchanged");
-//         return;
-//       }
-//       config_.time_offset = changed_parameter.value.double_value;
-//     } else if(changed_parameter.name == "auto_reboot")
-//     {
-//       config_.auto_reboot = changed_parameter.value.bool_value;
-//     } else if(changed_parameter.name == "publish_datagram")
-//     {
-//       config_.publish_datagram = changed_parameter.value.bool_value;
-//       if(config_.publish_datagram)
-//       {
-//         datagram_pub_ = node_->create_publisher<example_interfaces::msg::String>("datagram", 1000);
-//       }
-//       else
-//       {
-//         datagram_pub_.reset();
-//       }
-//     }
-//   }
-// }
 
 int SickTimCommon::stop_scanner()
 {
@@ -333,6 +215,9 @@ bool SickTimCommon::rebootScanner()
 
 SickTimCommon::~SickTimCommon()
 {
+  bool removed = diagnostics_->removeByName("/scan topic status");
+  //RCLCPP_INFO(rclcpp::get_logger(""), "Removed Diagnostic:[%d]", removed);
+  
   delete diagnosticPub_;
 
   printf("sick_tim driver exiting.\n");
