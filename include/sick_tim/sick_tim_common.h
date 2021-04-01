@@ -60,6 +60,7 @@
 // #include <sick_tim/SickTimConfig.h>
 
 #include "abstract_parser.h"
+#include "sick_tim_node_interface.h"
 
 namespace sick_tim
 {
@@ -67,7 +68,7 @@ namespace sick_tim
 class SickTimCommon
 {
 public:
-  SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr node, std::shared_ptr<diagnostic_updater::Updater> diagnostics);
+  SickTimCommon(AbstractParser* parser, std::shared_ptr<sick_tim::sickTimNode> node, std::shared_ptr<diagnostic_updater::Updater> diagnostics);
   virtual ~SickTimCommon();
   virtual int init();
   virtual int loopOnce();
@@ -123,7 +124,7 @@ protected:
   double expectedFrequency_;
 
   // Node interface
-  rclcpp::Node::SharedPtr node_;
+  std::shared_ptr<sick_tim::sickTimNode> node_;
 
 private:
   // ROS

@@ -49,7 +49,7 @@ namespace sick_tim
 class SickTimCommonMockup : public SickTimCommon
 {
 public:
-  SickTimCommonMockup(AbstractParser* parser, rclcpp::Node::SharedPtr node, std::shared_ptr<diagnostic_updater::Updater> diagnostics);
+  SickTimCommonMockup(AbstractParser* parser, std::shared_ptr<sick_tim::sickTimNode> node, std::shared_ptr<diagnostic_updater::Updater> diagnostics);
   virtual ~SickTimCommonMockup();
 
 protected:

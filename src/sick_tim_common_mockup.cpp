@@ -38,7 +38,7 @@
 namespace sick_tim
 {
 
-SickTimCommonMockup::SickTimCommonMockup(AbstractParser* parser, rclcpp::Node::SharedPtr node, std::shared_ptr<diagnostic_updater::Updater> diagnostics) : SickTimCommon(parser, node, diagnostics)
+SickTimCommonMockup::SickTimCommonMockup(AbstractParser* parser, std::shared_ptr<sick_tim::sickTimNode> node, std::shared_ptr<diagnostic_updater::Updater> diagnostics) : SickTimCommon(parser, node, diagnostics)
 {
   sub_ = node_->create_subscription<example_interfaces::msg::String>("datagram", 1, std::bind(&SickTimCommonMockup::datagramCB, this, std::placeholders::_1));
 }

@@ -52,7 +52,7 @@ namespace sick_tim
 class SickTimCommonUsb : public SickTimCommon
 {
 public:
-  SickTimCommonUsb(AbstractParser* parser, int device_number, rclcpp::Node::SharedPtr node, std::shared_ptr<diagnostic_updater::Updater> diagnostics);
+  SickTimCommonUsb(AbstractParser* parser, int device_number, std::shared_ptr<sick_tim::sickTimNode> node, std::shared_ptr<diagnostic_updater::Updater> diagnostics);
   virtual ~SickTimCommonUsb();
 
 protected:

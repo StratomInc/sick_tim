@@ -33,6 +33,7 @@ add_library(sick_tim_3xx
     src/sick_tim_common.cpp
     src/sick_tim_common_usb.cpp
     src/sick_tim_common_mockup.cpp
+    src/sick_tim_node_interface.cpp
     src/abstract_parser.cpp)
 ament_target_dependencies(sick_tim_3xx diagnostic_updater example_interfaces rclcpp sensor_msgs)
 target_link_libraries(sick_tim_3xx ${libusb_LIBRARIES} ${Boost_LIBRARIES})

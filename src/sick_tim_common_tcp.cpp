@@ -43,7 +43,7 @@ namespace sick_tim
 {
 
 SickTimCommonTcp::SickTimCommonTcp(const std::string &hostname, const std::string &port, int &timelimit, AbstractParser* parser, 
-                                rclcpp::Node::SharedPtr node, std::shared_ptr<diagnostic_updater::Updater> diagnostics)
+                                std::shared_ptr<sick_tim::sickTimNode> node, std::shared_ptr<diagnostic_updater::Updater> diagnostics)
 :
     SickTimCommon(parser, node, diagnostics),
     socket_(io_service_),

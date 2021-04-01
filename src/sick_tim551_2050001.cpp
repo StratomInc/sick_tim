@@ -37,41 +37,26 @@
 #include <sick_tim/sick_tim_common_tcp.h>
 #include <sick_tim/sick_tim_common_mockup.h>
 #include <sick_tim/sick_tim551_2050001_parser.h>
+#include <sick_tim/sick_tim_node_interface.h>
 
 
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("sick_driver");
+  auto node = std::make_shared<sick_tim::sickTimNode>();
+
+  std::string hostname = node->get_parameter("hostname").as_string();
+  std::string port = node->get_parameter("port").as_string();
+  int timelimit = node->get_parameter("timelimit").as_int();
+  bool subscribe_datagram = node->get_parameter("subscribe_datagram").as_bool();
+  int device_number = node->get_parameter("device_number").as_int();
 
   // check for TCP - use if ~hostname is set.
   bool useTCP = false;
-  std::string hostname;
-  hostname = node->declare_parameter("hostname", "");
   if(hostname != "")
   {
       useTCP = true;
   }
-  std::string port;
-  port = node->declare_parameter("port", "2112");
-
-  int timelimit;
-  timelimit = node->declare_parameter("timelimit", 5);
-
-  bool subscribe_datagram;
-  int device_number;
-  node->declare_parameter("subscribe_datagram", false);
-  node->declare_parameter("device_number", 0);
-  // datagram publisher (only for debug)
-  node->declare_parameter("publish_datagram", false);
-  // Declare Sick Tim Parameters
-  node->declare_parameter("min_ang", -0.75 * M_PI);
-  node->declare_parameter("max_ang", 0.75 * M_PI);
-  node->declare_parameter("intensity", true);
-  node->declare_parameter("skip", 0);
-  node->declare_parameter("frame_id", "laser");
-  node->declare_parameter("time_offset", -0.001);
-  node->declare_parameter("auto_reboot", true);
 
   sick_tim::SickTim5512050001Parser* parser = new sick_tim::SickTim5512050001Parser();
 

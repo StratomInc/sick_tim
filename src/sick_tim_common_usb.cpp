@@ -41,7 +41,7 @@
 namespace sick_tim
 {
 
-SickTimCommonUsb::SickTimCommonUsb(AbstractParser* parser, int device_number, rclcpp::Node::SharedPtr node, 
+SickTimCommonUsb::SickTimCommonUsb(AbstractParser* parser, int device_number, std::shared_ptr<sick_tim::sickTimNode> node, 
                                   std::shared_ptr<diagnostic_updater::Updater> diagnostics) : SickTimCommon(parser, node, diagnostics),
     ctx_(NULL), numberOfDevices_(0), devices_(NULL), device_handle_(NULL), device_number_(device_number)
 {

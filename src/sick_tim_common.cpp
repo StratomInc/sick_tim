@@ -44,14 +44,11 @@
 namespace sick_tim
 {
 
-SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr node, std::shared_ptr<diagnostic_updater::Updater> diagnostics) :
+SickTimCommon::SickTimCommon(AbstractParser* parser, std::shared_ptr<sick_tim::sickTimNode> node, std::shared_ptr<diagnostic_updater::Updater> diagnostics) :
     diagnosticPub_(NULL), expectedFrequency_(15.0), parser_(parser), diagnostics_(diagnostics)
     // FIXME All Tims have 15Hz?
 {
   node_ = node;
-
-  node_->set_on_parameters_set_callback(
-      std::bind(&SickTimCommon::onParameterEvent, this, std::placeholders::_1));
 
   // datagram publisher (only for debug)
   publish_datagram_ = node_->get_parameter("publish_datagram").as_bool();
@@ -79,74 +76,6 @@ SickTimCommon::SickTimCommon(AbstractParser* parser, rclcpp::Node::SharedPtr nod
           // timestamp delta can be from 0.0 to 1.3x what it ideally is.
           diagnostic_updater::TimeStampStatusParam(-1, 1.3 * 1.0/expectedFrequency_ - config_.time_offset));
   assert(diagnosticPub_ != NULL);
-}
-
-rcl_interfaces::msg::SetParametersResult SickTimCommon::onParameterEvent(
-        const std::vector<rclcpp::Parameter> &parameters)
-{
-  rcl_interfaces::msg::SetParametersResult result;
-  result.successful = true;
-  result.reason = "success";
-  for (const auto &parameter : parameters)
-  {
-    if (parameter.get_name() == "min_ang")
-    {
-      double value = parameter.as_double();
-      if (value < -0.75 * M_PI || value > 0.75 * M_PI){
-        result.successful = false;
-        result.reason = "Minimum angle outside limits: [-0.75*pi,0.75*pi]. Parameter left unchanged";
-        return result;
-      }
-      RCLCPP_INFO(node_->get_logger(), "Parameter 'min_ang' changed to %f", value);
-    }
-    if (parameter.get_name() == "max_ang")
-    {
-      double value = parameter.as_double();
-      if (value < -0.75 * M_PI || value > 0.75 * M_PI){
-        result.successful = false;
-        result.reason = "Maximum angle outside limits: [-0.75*pi,0.75*pi]. Parameter left unchanged";
-        return result;
-      }
-      RCLCPP_INFO(node_->get_logger(), "Parameter 'max_ang' changed to %f", value);
-    }
-    if (parameter.get_name() == "intensity")
-    {
-      bool value = parameter.as_bool();
-      RCLCPP_INFO(node_->get_logger(), "Parameter 'intensity' changed to %s ", value ? "True" : "False");
-    }
-    if (parameter.get_name() == "skip")
-    {
-      int value = parameter.as_int();
-      if (value < 0 || value > 9){
-        result.successful = false;
-        result.reason = "Skip outside limits: [0,9]. Parameter left unchanged";
-        return result;
-      }
-      RCLCPP_INFO(node_->get_logger(), "Parameter 'skip' changed to %i", value);
-    }
-    if (parameter.get_name() == "frame_id")
-    {
-      std::string value = parameter.as_string();
-      RCLCPP_INFO(node_->get_logger(), "Parameter 'frame_id' changed to %s ", value);
-    }
-    if (parameter.get_name() == "time_offset")
-    {
-      double value = parameter.as_double();
-      if (value < -0.25 || value > 0.25){
-        result.successful = false;
-        result.reason = "Time offset outside limits: [-0.25,0.25]. Parameter left unchanged";
-        return result;
-      }
-      RCLCPP_INFO(node_->get_logger(), "Parameter 'time_offset' changed to %f", value);
-    }
-    if (parameter.get_name() == "auto_reboot")
-    {
-      bool value = parameter.as_bool();
-      RCLCPP_INFO(node_->get_logger(), "Parameter 'auto_reboot' changed to %s ", value ? "True" : "False");
-    }
-  }
-
-  return result;
 }
 
 int SickTimCommon::stop_scanner()
